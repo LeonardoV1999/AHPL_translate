@@ -23,7 +23,8 @@ EOF       {return EOF_STMT;}      /* end of file */
 na        {return ERROR_STMT;}    /* error */
 "1"       {return ONE;}		/* one '1'  !! puede traer problemas !!*/
 "0"	  {return ZERO;}	/* zero '0' !! puede traer problemas !!*/
-{integer} {return NUMBER;}	/* string of digits */
+{integer} {numVal = atoi(yytext);
+	   return NUMBER;}	/* string of digits */
 {hex}     {return HEX;}		/* !! Revisar los HEX !!*/
 
  /* keywords */
@@ -60,7 +61,6 @@ DEC          {return DEC;}
 CMP          {return CMP;}
 ASSOC        {return ASSOC;}
  /* end of keywords */
-inputs   {return inputs;}
 exinputs {return exinputs;}
 outputs  {return outputs;}
 buses    {return buses;}
@@ -143,7 +143,7 @@ int main(int argc, char **argv)
   if(!yyparse())
   {
   	printf("\nAHPL parse Worked\n");
-  	AHPL_translate(Module);
+  	AHPL_translate(Module, inputsArray);
   
   }
   else

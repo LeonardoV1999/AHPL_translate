@@ -2,16 +2,36 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include <string.h>
+    #include <stdbool.h>
     #include "module.h"
-    
+    #define charl 50 /*define el numero maximo de declaraciones que puedo tener por modulo*/
     
     
     int n = 0;
     int ns = 0;
     int module = 1;                   /*halla el numero de modulos*/
     char *idVal;
-    void AHPL_translate(Mcom input);
-    Mcom Module;
+    int  numVal;
+    //void AHPL_translate(Mcom input);
+    Mcom Module = {0};
+    
+    /******************************************************/
+    /* estructura que define las banderas de las entradas*/
+    char *inputsArray[charl] = {0}; /*arreglo que almacena el nombre de las entradas*/
+    typedef struct mod_flags
+    {
+      bool inputF;
+      
+      bool rowF;
+      bool colF;
+    }ModuleFlag;
+    /*----------------------------------------------------*/
+    ModuleFlag ModuleF = {0};
+    int row = 0;
+    int col = 0;
+    char *copyArray(ModuleFlag* MF ,char *array, Mcom* Module, int row, int col);
+    /******************************************************/
+    
 %}
 /* ?????????? */
 %token id          /* id */
@@ -110,14 +130,15 @@
 %token mbody 
 %token mend
 
-%token inputs
+//%token inputs
 %token exinputs
 %token outputs
 %token buses
 %token exbuses
 %token memory
 %token clunits
-/*%token clkseq1
+/*%token aid
+%token clkseq1
 %token synop
 %token srcexpr
 %token destexpr1
@@ -140,7 +161,7 @@
 
 /*line 1 : <system> ::= <module> {<module>} <comsec> *
           define la estructura del sistema           */
-system : module systemx comsec 
+system : module systemx comsec {Module.inputsNum = 0;}
        | module         comsec 
        ;
        
@@ -158,27 +179,114 @@ module : mheader mdclr mbody mend
 
 /*line 3 : <mheader> ::= AHPLMODULE: id     *     
           define el formato de un encabezado*/
-mheader : AHPLMODULE COLON id PERIOD {Module.moduleName = idVal;
-				      printf("%s",Module.moduleName);}
+mheader : AHPLMODULE COLON id PERIOD {Module.moduleName = idVal;}
 	;
 /* end of line 3 ----------------------------------------*/
 
-/*line 3 : <mdclr> ::= {<inputs> | <exinputs> | <outputs> |
+/*line 4 : <mdclr> ::= {<inputs> | <exinputs> | <outputs> |
 			<buses>  | <exbuses>  | <memory>  | clunits } *
   se encarga de definir el formato de declaracion de un modulo        */
 mdclr	: mdclrx
 	| mdclr mdclrx
 	;
 
-mdclrx	: inputs
-	| exinputs
+mdclrx	: inputs   
+	| exinputs /*!!determinar el numero de veces que aparece alguno de estos items !!*/
 	| outputs
 	| buses
 	| exbuses
 	| memory
 	| clunits
 	;
-/* end of line 3 -----------------------------------------------------*/
+/* end of line 4 -----------------------------------------------------*/
 
-/*!!!*/
+/*line 5 : <inputs> ::= INPUTS: <aid> {;aid}.     *
+  se encarga de definir el formato de una entrada */
+inputs	: INPUTS COLON inputsy inputsx PERIOD 
+	| INPUTS COLON inputsy         PERIOD 
+	;
+inputsx : SEMICOLON aid        {ModuleF.inputF = true;
+				inputsArray[Module.inputsNum] = 
+	                        copyArray(&ModuleF,
+	                                   inputsArray[Module.inputsNum],
+	                                   &Module,
+	                                   row,
+	                                   col);}
+	| inputsx SEMICOLON aid{ModuleF.inputF = true;
+				inputsArray[Module.inputsNum] = 
+	                        copyArray(&ModuleF,
+	                        	   inputsArray[Module.inputsNum],
+	                        	   &Module,
+	                        	   row,
+	                        	   col);}
+	;
+inputsy : aid		       {ModuleF.inputF = true;
+				inputsArray[Module.inputsNum] = 
+	                        copyArray(&ModuleF,
+	                        	   inputsArray[Module.inputsNum],
+	                        	   &Module,
+	                        	   row,
+	                        	   col);}
+	;
+/*end of line 5 ----------------------------------*/
+
+
+/*line 12 : <aid> ::= id ['<' num '>']['[' num ']'] *
+  se encarga de definir el formato en el que se     *
+  escibe una variable                               */
+aid:      id           {ModuleF.rowF = false ; ModuleF.colF = false; row = 0; col  = 0;}
+      //| id    aidy  /*(parece ser que es un arreglo de solo columnas) !! no se ve correcto !!*/
+	| id aidx       /* variable en forma de arrego (BUS) */
+	| id aidx aidy  /* variable en forma de matriz */
+	;
+aidx	: LABRACKET NUMBER RABRACKET   {row  = numVal;
+					ModuleF.rowF = true;
+					ModuleF.colF = false;}
+	;
+aidy	: LSQBRACKET NUMBER RSQBRACKET {col  = numVal;
+					ModuleF.rowF = true;
+					ModuleF.colF = true;}
+	;	
+/*end of line 12 -----------------------------------*/
 %%
+char *copyArray(ModuleFlag* MF ,char *array, Mcom* Module, int row, int col)
+{  
+   char* copyA = 0;                 //se crea siempre que se usa la funcion
+   int copyNum = 0; 
+   if(MF->inputF == true)
+   {
+   	if(MF->rowF==false && MF->colF ==false)
+   	{
+	  //Module->inputs 
+	  copyA = idVal;
+	  Module->inputs[Module->inputsNum] = copyA;
+	  printf("\n%s\n", Module->inputs[Module->inputsNum]);
+	  printf("\nrows = %d ; col = %d\n", row, col);
+	  array = copyA;
+	  //
+	  Module->inputsNum++;
+	  MF->inputF = false;
+        }else if(MF->rowF==true && MF->colF ==false)
+   	      {
+	       copyA = idVal;
+	  Module->inputs[Module->inputsNum] = copyA;
+	  printf("\n%s\n", Module->inputs[Module->inputsNum]);
+	  printf("\nrows = %d ; col = %d\n", row, col);
+	  array = copyA;
+	  //
+	  Module->inputsNum++;
+	  MF->inputF = false;
+              }else if(MF->rowF==true && MF->colF ==true)
+   	            {
+	              copyA = idVal;
+	              Module->inputs[Module->inputsNum] = copyA;
+	              printf("\n%s\n", Module->inputs[Module->inputsNum]);
+	              printf("\nrows = %d ; col = %d\n", row, col);
+	              array = copyA;
+	              //
+	              Module->inputsNum++;
+	              MF->inputF = false;
+                    }
+   }
+  return (char*)array;
+}

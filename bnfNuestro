@@ -1,0 +1,18 @@
+<system>   ::= <module> {<module>} <comsec>
+<module>   ::= <mheader> <mdclr> <mbody> <mend>
+<mheader>  ::= AHPLMODULE : id.
+<mdclr>    ::= { <inputs> | <exinputs> | <outputs> |
+	       | <buses>  | <exbuses>  | <memory>
+	       | clunits }
+<inputs>   ::= INPUTS: <aid> {; <aid>}.
+<exinputs> ::= EXINPUTS: <aid> {; <aid>}. // se asume como entrada externa 
+					  // (toca redefinir este formato para mas facilidad)
+<outputs>  ::= OUTPUTS: <aid> {; <aid>}.
+<buses>    ::= BUSES:   <aid> {; <aid>}.
+<exbuses>  ::= EXBUSES: <aid> {; <aid>}.  // se asume como entrada externa 
+					  // (toca redefinir este formato para mas facilidad)
+<memory>   ::= MEMORY:  <aid> {; <aid>}.
+<clunits>  ::= CLUNITS: <aid> {; <aid>}.
+<aid>	   ::= id ['<'num'>'] | id '<'num'>' ['['num']']
+	      
+	  

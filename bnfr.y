@@ -2,16 +2,29 @@
     #include <stdio.h>
     #include <stdlib.h>
     #include <string.h>
+    #include <stdbool.h>
     #include "module.h"
-    
+    #define charl 50 /*define el numero maximo de declaraciones que puedo tener por modulo*/
     
     
     int n = 0;
     int ns = 0;
     int module = 1;                   /*halla el numero de modulos*/
     char *idVal;
-    void AHPL_translate(Mcom input);
-    Mcom Module;
+    int  numVal;
+    Mcom Module = {0};
+    
+    /******************************************************/
+    /* estructura que define las banderas de las entradas*/
+    //char *inputsArray[charl] = {0}; /*arreglo que almacena el nombre de las entradas*/
+    
+    /*----------------------------------------------------*/
+    ModuleFlag ModuleF = {0};
+    int row = 0;
+    int col = 0;
+    
+    /******************************************************/
+    
 %}
 /* ?????????? */
 %token id          /* id */
@@ -89,6 +102,8 @@
 %token RSQBRACKET  /* right square bracket */
 %token LABRACKET   /* left angle bracket */
 %token RABRACKET   /* right angle bracket */
+%token LCBRACE     /* left curly brace */
+%token RCBRACE     /* right curly brace */
 %token SEMICOLON   /* semicolon */
 %token ENCODE      /* encode */
 %token PERIOD  	   /* period */
@@ -110,14 +125,15 @@
 %token mbody 
 %token mend
 
-%token inputs
-%token exinputs
-%token outputs
+//%token inputs
+//%token exinputs
+//%token outputs
 %token buses
 %token exbuses
-%token memory
+//%token memory
 %token clunits
-/*%token clkseq1
+/*%token aid
+%token clkseq1
 %token synop
 %token srcexpr
 %token destexpr1
@@ -140,7 +156,7 @@
 
 /*line 1 : <system> ::= <module> {<module>} <comsec> *
           define la estructura del sistema           */
-system : module systemx comsec 
+system : module systemx comsec {Module.inputsNum = 0;}
        | module         comsec 
        ;
        
@@ -158,27 +174,261 @@ module : mheader mdclr mbody mend
 
 /*line 3 : <mheader> ::= AHPLMODULE: id     *     
           define el formato de un encabezado*/
-mheader : AHPLMODULE COLON id PERIOD {Module.moduleName = idVal;
-				      printf("%s",Module.moduleName);}
+mheader : AHPLMODULE COLON id PERIOD {Module.moduleName = idVal;}
 	;
 /* end of line 3 ----------------------------------------*/
 
-/*line 3 : <mdclr> ::= {<inputs> | <exinputs> | <outputs> |
+/*line 4 : <mdclr> ::= {<inputs> | <exinputs> | <outputs> |
 			<buses>  | <exbuses>  | <memory>  | clunits } *
   se encarga de definir el formato de declaracion de un modulo        */
 mdclr	: mdclrx
 	| mdclr mdclrx
 	;
 
-mdclrx	: inputs
-	| exinputs
+mdclrx	: inputs   
+	| exinputs /*!!determinar el numero de veces que aparece alguno de estos items !!*/
 	| outputs
 	| buses
 	| exbuses
 	| memory
 	| clunits
 	;
-/* end of line 3 -----------------------------------------------------*/
+/* end of line 4 -----------------------------------------------------*/
 
-/*!!!*/
+/*line 5 : <inputs> ::= INPUTS: <aid> {;aid}.     *
+  se encarga de definir el formato de una entrada */
+inputs	: INPUTS COLON inputsy inputsx PERIOD 
+	| INPUTS COLON inputsy         PERIOD 
+	;
+inputsx : SEMICOLON aid1        {ModuleF.inputF = true;
+				 Module.inputsArray[Module.inputsNum] = 
+	                         copyArray(&ModuleF,
+	                                    Module.inputsArray[Module.inputsNum],
+	                                   &Module,
+	                                    row,
+	                                    col,
+	                                    idVal);}
+	| inputsx SEMICOLON aid1 {ModuleF.inputF = true;
+			 	  Module.inputsArray[Module.inputsNum] = 
+	                          copyArray(&ModuleF,
+	                        	     Module.inputsArray[Module.inputsNum],
+	                        	    &Module,
+	                        	     row,
+	                        	     col,
+	                        	     idVal);}
+	;
+inputsy : aid1		         {ModuleF.inputF = true;
+				  Module.inputsArray[Module.inputsNum] = 
+	                          copyArray(&ModuleF,
+	                        	     Module.inputsArray[Module.inputsNum],
+	                        	    &Module,
+	                        	     row,
+	                        	     col,
+	                        	     idVal);}
+	;
+/*end of line 5 ----------------------------------*/
+
+/*line 6 : <exinputs> ::= EXINPUTS: <exaid> {; <exaid>}.*
+  en caso de ser un arreglo bidimensional solo será     *
+  necesario introducir el numero de filas               */
+exinputs : EXINPUTS COLON exinputsy exinputsx PERIOD 
+	 | EXINPUTS COLON exinputsy           PERIOD
+	 ;
+exinputsx: exinputsz exaid        {ModuleF.exinputF = true;
+                                   Module.exinputsE = true;
+                                   Module.exinputs[Module.exinputsNumR][Module.exinputsNumC] = 
+                                   copyArray(&ModuleF,
+	                           Module.exinputsArray[Module.exinputsNumR],
+	                           &Module,
+	                            row,
+	                            col,
+	                            idVal);}
+	 |exinputsx exinputsz exaid{ModuleF.exinputF = true;
+                                    Module.exinputsE = true;
+                                    Module.exinputs[Module.exinputsNumR][Module.exinputsNumC] = 
+                                    copyArray(&ModuleF,
+	                            Module.exinputsArray[Module.exinputsNumR],
+	                            &Module,
+	                             row,
+	                             col,
+	                             idVal);}
+	 ;
+exinputsy: exaid		    {ModuleF.exinputF = true;
+				    Module.exinputsE = true;
+                                    Module.exinputs[Module.exinputsNumR][Module.exinputsNumC] = 
+                                    copyArray(&ModuleF,
+	                            Module.exinputsArray[Module.exinputsNumR],
+	                            &Module,
+	                            row,
+	                            col,
+	                            idVal);}
+	 ;
+exinputsz: SEMICOLON                {Module.exinputsNumC = 0;}
+	 ;
+/*exinputsr: EXINPUTS COLON         {Module.exinputsNumR = 0;
+					Module.exinputsNumC = 0;}
+	 ;*/
+/*end of line 6 ----------------------------------------*/
+
+/*line 7 : <outputs> ::= OUTPUTS: <aid> {; <aid>} *
+  define el formato de una salida                 */
+outputs	: OUTPUTS COLON outputsy outputsx PERIOD 
+	| OUTPUTS COLON outputsy          PERIOD 
+	;
+outputsx : SEMICOLON aid1        {ModuleF.outputF = true;
+				 Module.outputsArray[Module.outputsNum] = 
+	                         copyArray(&ModuleF,
+	                                    Module.outputsArray[Module.outputsNum],
+	                                   &Module,
+	                                    row,
+	                                    col,
+	                                    idVal);}
+	| outputsx SEMICOLON aid1 {ModuleF.outputF = true;
+			 	  Module.outputsArray[Module.outputsNum] = 
+	                          copyArray(&ModuleF,
+	                        	     Module.outputsArray[Module.outputsNum],
+	                        	    &Module,
+	                        	     row,
+	                        	     col,
+	                        	     idVal);}
+	;
+outputsy : aid1		         {ModuleF.outputF = true;
+				  Module.outputsArray[Module.outputsNum] = 
+	                          copyArray(&ModuleF,
+	                        	     Module.outputsArray[Module.outputsNum],
+	                        	    &Module,
+	                        	     row,
+	                        	     col,
+	                        	     idVal);}
+	;
+
+/*end of line 7 ----------------------------------*/
+
+/*line 10 : <memory> ::= MEMORY: <aid> {; aid} !!!!!!!!!!!!!!!!!!!!!editar!!!!!!!!!!!!!!!!!!!!*/
+memory	: MEMORY COLON memoryy memoryx PERIOD 
+	| MEMORY COLON memoryy         PERIOD 
+	;
+memoryx : SEMICOLON aid        {ModuleF.memoryF = true;
+				 Module.memoryArray[Module.memoryNum] = 
+	                         copyArray(&ModuleF,
+	                                    Module.memoryArray[Module.memoryNum],
+	                                   &Module,
+	                                    row,
+	                                    col,
+	                                    idVal);}
+	| memoryx SEMICOLON aid {ModuleF.memoryF = true;
+			 	  Module.memoryArray[Module.memoryNum] = 
+	                          copyArray(&ModuleF,
+	                        	     Module.memoryArray[Module.memoryNum],
+	                        	    &Module,
+	                        	     row,
+	                        	     col,
+	                        	     idVal);}
+	;
+memoryy : aid		         {ModuleF.memoryF = true;
+				  Module.memoryArray[Module.memoryNum] = 
+	                          copyArray(&ModuleF,
+	                        	     Module.memoryArray[Module.memoryNum],
+	                        	    &Module,
+	                        	     row,
+	                        	     col,
+	                        	     idVal);}
+	;
+/*end of line 10 -----------------------------!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+
+/*line 12 : <aid> ::= id ['<' num '>']['[' num ']'] *
+  se encarga de definir el formato en el que se     *
+  escibe una variable                               */
+aid:      id           {ModuleF.rowF = false;
+			ModuleF.colF = false;
+			row = 0;
+			col  = 0;}
+      //| id    aidy  /*(parece ser que es un arreglo de solo columnas) !! no se ve correcto !!*/
+	| id aidx       /* variable en forma de arrego (BUS) */
+	| id aidx aidy  /* variable en forma de matriz */
+	;
+aidx	: LABRACKET NUMBER RABRACKET   {row  = numVal;
+					ModuleF.rowF = true;
+					ModuleF.colF = false;}
+	;
+aidy	: LSQBRACKET NUMBER RSQBRACKET {col  = numVal;
+					ModuleF.rowF = true;
+					ModuleF.colF = true;}
+	;	
+/*end of line 12 -----------------------------------*/
+
+/*line 13 : <exaid> ::= <id> '{' {<aid1> {; <aid1>}}'}' (inventada por mi) *
+            <exaid> ::= <id> '[' {exaidw {;exaidw}} ']' (mejora)           *
+  esta linea define el formato en el que se describen                       *
+  las declaraciones provenientes de modulos externos                        *
+  (exinputs y exbuses)                                                      */
+exaid	: exaidy LSQBRACKET exaidw exaidx exaidz 
+	| exaidy LSQBRACKET exaidw        exaidz 
+	| exaidy LSQBRACKET               exaidz 
+	;
+exaidy	: id     {/*necesito sabe el nombre del modulo*/
+		   Module.exinputsNumC = 0;
+		   Module.exinputs[Module.exinputsNumR][Module.exinputsNumC] = idVal;
+		   printf("\n%s\n",Module.exinputs[Module.exinputsNumR][Module.exinputsNumC]);
+		   Module.exinputsE = true;
+		   Module.exbusesE  = true; }
+	;
+exaidz	: RSQBRACKET {Module.exinputsNumR ++;
+		   Module.exinputsNumC = 0;}
+	;
+exaidx	: SEMICOLON exaidw         {Module.exinputsE = true;
+				    Module.exbusesE  = true;}
+				    
+	| exaidx SEMICOLON exaidw  {Module.exinputsE = true;
+				    Module.exbusesE  = true;}
+	;
+/*line 14 : <exaidw>   ::= '{'<aid1> , <aid1>'}'         *
+  esta linea se encarga de definir el formato de         *
+  separacion que hay entre las entradas externas de los  *
+  modulos y como se unen con las entradas o buses        *
+  internos						 */
+exaidw	: LCBRACE exaid1 COLCAT exaid1 RCBRACE /*verificar*/
+	;
+/*end of line 14 ----------------------------------------*/
+	
+exaid1  : id {ModuleF.rowF = false; 
+	      ModuleF.colF = false;
+	      Module.exinputsStore[Module.exinputsNumR] ++; /* almacena la cantidad de entrada *
+	       						     * para un arreglo externo         */
+	      Module.exinputsNumC ++;
+	      Module.exinputs[Module.exinputsNumR][Module.exinputsNumC] = idVal;
+	      printf("\n%s\n",Module.exinputs[Module.exinputsNumR][Module.exinputsNumC]);
+	      row = 0;
+	      col = 0;}
+					 
+	| id LABRACKET NUMBER RABRACKET 
+	      {row  = numVal;
+	       col  = 0;
+               Module.exinputsStore[Module.exinputsNumR] ++;/* almacena la cantidad de entrada *
+	       						     * para un arreglo externo         */
+	       Module.exinputsNumC ++;
+	       Module.exinputs[Module.exinputsNumR][Module.exinputsNumC] = idVal;
+               printf("\n%s\n",Module.exinputs[Module.exinputsNumR][Module.exinputsNumC]);
+               ModuleF.rowF = true;
+	       ModuleF.colF = false;}
+	;
+
+/*end of line 13 ----------------------------------------*/
+
+
+/*line 15 : <aid1> ::= id ['<'num'>'] (inventada por mi) *
+  define la descripcion de un arreglo o una variable     *
+  de un bit						 */
+aid1	: id				{ModuleF.rowF = false ; 
+					 ModuleF.colF = false;
+					 row = 0;
+					 col  = 0;}
+					 
+	| id LABRACKET NUMBER RABRACKET {row  = numVal;
+					 col  = 0;
+					 ModuleF.rowF = true;
+					 ModuleF.colF = false;}
+	;
+/*end of line 15 ----------------------------------------*/
 %%
+

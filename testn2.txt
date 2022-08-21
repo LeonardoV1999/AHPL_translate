@@ -1,0 +1,38 @@
+AHPLMODULE : modulo . 
+
+INPUTS: a<5>;
+	b<6>;
+	c;
+	d;
+	e<6>;
+	f;
+	yacc<23>.
+		  
+OUTPUTS:leonardo<35>;
+	jose<45>;
+	viana;
+	xd;
+	vedad<6>.
+EXINPUTS : leonardo [{a,b<6>};
+	             {c,d<7>};
+	             {fuego,tierra};
+	             {emanuel,cv<60:51>};
+	             {otro , paprobar<35:29>}];
+	   liliana [{alejandra,viana<29:28>};
+	   	    {libardo,deavila<86:84>}].
+buses
+exbuses
+MEMORY: x.
+clunits
+
+BODY
+a = b & c + d.
+v = c @ d @ e .
+xd = a & b + c @ d.
+END
+
+
+mend
+
+
+comsec

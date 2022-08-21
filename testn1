@@ -24,7 +24,13 @@ exbuses
 MEMORY: x.
 clunits
 
-mbody
+BODY
+a = b & c + d.
+b = c @ d @ e .
+xd = a & b + c @ d.
+END
+
+
 mend
 
 

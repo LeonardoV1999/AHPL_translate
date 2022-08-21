@@ -23,7 +23,7 @@ EOF       {return EOF_STMT;}      /* end of file */
 na        {return ERROR_STMT;}    /* error */
 "1"       {return ONE;}		/* one '1'  !! puede traer problemas !!*/
 "0"	  {return ZERO;}	/* zero '0' !! puede traer problemas !!*/
-{integer} {numVal = atoi(yytext);
+{integer} {numVal = strdup(yytext);
 	   return NUMBER;}	/* string of digits */
 {hex}     {return HEX;}		/* !! Revisar los HEX !!*/
 
@@ -63,25 +63,33 @@ ASSOC        {return ASSOC;}
  /* end of keywords */
 
 
+
+ /* test keywords */
 buses    {return buses;}
 exbuses  {return exbuses;}
 clunits  {return clunits;}
 
-mbody        {return mbody;}
+
 mend         {return mend;}
 comsec	     {return comsec;}
- /* test keywords */
-
  /* end of test keywords*/
 
  /* operators */
-"^"       {return NOT;}		/* inverter */
-"&"    	  {return AND;}		/* and */
-"^&"      {return NAND;}	/* nand */
-"+"	  {return OR;}		/* or */
-"^+"	  {return NOR;}		/* nor */
-"@" 	  {return XOR;}  	/* xor */
-"^@"	  {return XNOR;}	/* xnor */
+"^"       {clVal = strdup(yytext);
+           return NOT;}		/* inverter */
+"&"    	  {clVal = strdup(yytext);
+           return AND;}		/* and */
+"^&"      {clVal = strdup(yytext);
+           return NAND;}	/* nand */
+"+"	  {clVal = strdup(yytext);
+           return OR;}		/* or */
+"^+"	  {clVal = strdup(yytext);
+           return NOR;}		/* nor */
+"@" 	  {clVal = strdup(yytext);
+           return XOR;}  	/* xor */
+"^@"	  {clVal = strdup(yytext);
+           return XNOR;}	/* xnor */
+           
 "&/"	  {return ANDCR;}	/* and col reduction */
 "^&/"	  {return NANDCR;}	/* nand col reduction */
 "+/" 	  {return ORCR;}	/* or col reduction */

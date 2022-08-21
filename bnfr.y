@@ -11,12 +11,13 @@
     int ns = 0;
     int module = 1;                   /*halla el numero de modulos*/
     char *idVal;
-    int  numVal;
+    char *clVal;
+    char*  numVal;
     Mcom Module = {0};
     
     /******************************************************/
     /* estructura que define las banderas de las entradas*/
-    //char *inputsArray[charl] = {0}; /*arreglo que almacena el nombre de las entradas*/
+   
     
     /*----------------------------------------------------*/
     ModuleFlag ModuleF = {0};
@@ -98,10 +99,14 @@
 %token TRANSFER    /* transfer */
 %token RPARENTESIS /* right parentesis */
 %token LPARENTESIS /* left parentesis */
-%token LSQBRACKET  /* left square bracket */
-%token RSQBRACKET  /* right square bracket */
-%token LABRACKET   /* left angle bracket */
-%token RABRACKET   /* right angle bracket */
+
+%left LABRACKET   /* left angle bracket */
+%left RABRACKET   /* right angle bracket */
+
+
+%left LSQBRACKET  /* left square bracket */
+%left RSQBRACKET  /* right square bracket */
+
 %token LCBRACE     /* left curly brace */
 %token RCBRACE     /* right curly brace */
 %token SEMICOLON   /* semicolon */
@@ -122,7 +127,7 @@
 
 //%token mheader
 //%token mdclr
-%token mbody 
+//%token mbody 
 %token mend
 
 //%token inputs
@@ -236,7 +241,7 @@ exinputs : EXINPUTS COLON exinputsy exinputsx PERIOD
 	 ;
 exinputsx: exinputsz exaid        {ModuleF.exinputF = true;
                                    Module.exinputsE = true;
-                                   Module.exinputs[Module.exinputsNumR][Module.exinputsNumC] = 
+                                   Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0] = 
                                    copyArray(&ModuleF,
 	                           Module.exinputsArray[Module.exinputsNumR],
 	                           &Module,
@@ -245,7 +250,7 @@ exinputsx: exinputsz exaid        {ModuleF.exinputF = true;
 	                            idVal);}
 	 |exinputsx exinputsz exaid{ModuleF.exinputF = true;
                                     Module.exinputsE = true;
-                                    Module.exinputs[Module.exinputsNumR][Module.exinputsNumC] = 
+                                    Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0] = 
                                     copyArray(&ModuleF,
 	                            Module.exinputsArray[Module.exinputsNumR],
 	                            &Module,
@@ -255,7 +260,7 @@ exinputsx: exinputsz exaid        {ModuleF.exinputF = true;
 	 ;
 exinputsy: exaid		    {ModuleF.exinputF = true;
 				    Module.exinputsE = true;
-                                    Module.exinputs[Module.exinputsNumR][Module.exinputsNumC] = 
+                                    Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0] = 
                                     copyArray(&ModuleF,
 	                            Module.exinputsArray[Module.exinputsNumR],
 	                            &Module,
@@ -347,11 +352,11 @@ aid:      id           {ModuleF.rowF = false;
 	| id aidx       /* variable en forma de arrego (BUS) */
 	| id aidx aidy  /* variable en forma de matriz */
 	;
-aidx	: LABRACKET NUMBER RABRACKET   {row  = numVal;
+aidx	: LABRACKET NUMBER RABRACKET   {row  = atoi(numVal);
 					ModuleF.rowF = true;
 					ModuleF.colF = false;}
 	;
-aidy	: LSQBRACKET NUMBER RSQBRACKET {col  = numVal;
+aidy	: LSQBRACKET NUMBER RSQBRACKET {col  = atoi(numVal);
 					ModuleF.rowF = true;
 					ModuleF.colF = true;}
 	;	
@@ -368,8 +373,8 @@ exaid	: exaidy LSQBRACKET exaidw exaidx exaidz
 	;
 exaidy	: id     {/*necesito sabe el nombre del modulo*/
 		   Module.exinputsNumC = 0;
-		   Module.exinputs[Module.exinputsNumR][Module.exinputsNumC] = idVal;
-		   printf("\n%s\n",Module.exinputs[Module.exinputsNumR][Module.exinputsNumC]);
+		   Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0] = idVal;
+		   printf("\n%s\n",Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0]);
 		   Module.exinputsE = true;
 		   Module.exbusesE  = true; }
 	;
@@ -382,36 +387,65 @@ exaidx	: SEMICOLON exaidw         {Module.exinputsE = true;
 	| exaidx SEMICOLON exaidw  {Module.exinputsE = true;
 				    Module.exbusesE  = true;}
 	;
-/*line 14 : <exaidw>   ::= '{'<aid1> , <aid1>'}'         *
+/*line 14 : <exaidw>   ::= '{'<aid1> , <aid2>'}'         *
   esta linea se encarga de definir el formato de         *
   separacion que hay entre las entradas externas de los  *
   modulos y como se unen con las entradas o buses        *
   internos						 */
-exaidw	: LCBRACE exaid1 COLCAT exaid1 RCBRACE /*verificar*/
+exaidw	: LCBRACE exaid1 COLCAT exaid2 RCBRACE /*verificar*/
 	;
 /*end of line 14 ----------------------------------------*/
 	
-exaid1  : id {ModuleF.rowF = false; 
-	      ModuleF.colF = false;
-	      Module.exinputsStore[Module.exinputsNumR] ++; /* almacena la cantidad de entrada *
+exaid1  : id {Module.exinputsStore[Module.exinputsNumR] ++; /* almacena la cantidad de entrada *
 	       						     * para un arreglo externo         */
 	      Module.exinputsNumC ++;
-	      Module.exinputs[Module.exinputsNumR][Module.exinputsNumC] = idVal;
-	      printf("\n%s\n",Module.exinputs[Module.exinputsNumR][Module.exinputsNumC]);
+	      Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0] = idVal;
+	      printf("\n%s\n",Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0]);
 	      row = 0;
 	      col = 0;}
 					 
-	| id LABRACKET NUMBER RABRACKET 
-	      {row  = numVal;
+	| id LABRACKET NUMBER RABRACKET  /*me permite tomar un bit individual*/
+	      {row  = atoi(numVal);
 	       col  = 0;
                Module.exinputsStore[Module.exinputsNumR] ++;/* almacena la cantidad de entrada *
 	       						     * para un arreglo externo         */
 	       Module.exinputsNumC ++;
-	       Module.exinputs[Module.exinputsNumR][Module.exinputsNumC] = idVal;
-               printf("\n%s\n",Module.exinputs[Module.exinputsNumR][Module.exinputsNumC]);
-               ModuleF.rowF = true;
-	       ModuleF.colF = false;}
+	       Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0] = idVal;
+               printf("\n%s\n",Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0]);}
 	;
+/*line 16 : <aid2> ::= id ['<'num [: num] '>'] (inventada por mi)  *
+  me permite tomar segmentos de un arreglo 
+  (pero dichos segmentos deben ser unicamente de orden descendente)*/
+exaid2	: id {Module.exinputsStore[Module.exinputsNumR] ++; /* almacena la cantidad de entrada *
+	       						     * para un arreglo externo         */
+	      Module.exinputsNumC ++;
+	      Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0] = idVal;
+	      Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][1] = (char*)'0';
+	      Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][2] = (char*)'0';
+	      printf("\n%s\n",Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0]);}
+	| id LABRACKET NUMBER RABRACKET {ModuleF.rowF = true; 
+	      ModuleF.colF = false;
+	      Module.exinputsStore[Module.exinputsNumR] ++; /* almacena la cantidad de entrada *
+	       						     * para un arreglo externo         */
+	      Module.exinputsNumC ++;
+	      Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0] = idVal;
+	      Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][1] = numVal;
+	      Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][2] = (char*)'0';
+	      printf("\n%s\n",Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0]);}
+	| id LABRACKET exaid2x COLON  exaid2y RABRACKET {ModuleF.rowF = true; 
+	      ModuleF.colF = false;
+	      Module.exinputsStore[Module.exinputsNumR] ++; /* almacena la cantidad de entrada *
+	       						     * para un arreglo externo         */
+	      //Module.exinputsNumC ++;
+	      Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0] = idVal;
+	      printf("\n%s\n",Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][0]);}
+	;
+exaid2x : NUMBER {Module.exinputsNumC ++;
+		  Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][1] = numVal;}
+	;
+exaid2y : NUMBER {Module.exinputs[Module.exinputsNumR][Module.exinputsNumC][2] = numVal;}
+	;	
+/*end of line 16 --------------------------------------------------*/  
 
 /*end of line 13 ----------------------------------------*/
 
@@ -424,11 +458,57 @@ aid1	: id				{ModuleF.rowF = false ;
 					 row = 0;
 					 col  = 0;}
 					 
-	| id LABRACKET NUMBER RABRACKET {row  = numVal;
+	| id LABRACKET NUMBER RABRACKET {row  = atoi(numVal);
 					 col  = 0;
 					 ModuleF.rowF = true;
 					 ModuleF.colF = false;}
 	;
 /*end of line 15 ----------------------------------------*/
+
+
+/*********adelanto*******************************************
+/* dentro de las siguientes lineas se escribe una prueba de *
+   lo que seria un circuito de combinacion logica           */
+mbody	: BODY logic END  /*se cambio la definicion del body, lo que esta mal por ahora *
+			    pero sirve a modo de prueba					*/
+	;
+logic	: logic1
+	| logic logic1
+	;
+	
+logic1	: logic1y EQUAL logic2 logic1x
+	;
+logic1x : PERIOD { Module.ClunitsNumR ++ ;
+		   Module.ClunitsNumC = 0;}
+	;
+	
+logic1y : id     { Module.Clunits[Module.ClunitsNumR][Module.ClunitsNumC] = idVal;
+		   Module.ClunitsNumC ++;
+		   Module.ClunitsStore[Module.ClunitsNumR] ++; }
+	;
+	
+logic2  : id             { Module.Clunits[Module.ClunitsNumR][Module.ClunitsNumC] = idVal;
+		           Module.ClunitsNumC ++;
+		           Module.ClunitsStore[Module.ClunitsNumR] ++; }
+	| logic2 gate id { Module.Clunits[Module.ClunitsNumR][Module.ClunitsNumC] = idVal;
+		   	   Module.ClunitsNumC ++;
+		   	   Module.ClunitsStore[Module.ClunitsNumR] ++; }
+	;
+	
+	
+gate    : AND { Module.Clunits[Module.ClunitsNumR][Module.ClunitsNumC] = "and";
+		Module.ClunitsNumC ++;
+		Module.ClunitsStore[Module.ClunitsNumR] ++; }
+	| OR  { Module.Clunits[Module.ClunitsNumR][Module.ClunitsNumC] = "or";
+		Module.ClunitsNumC ++; 
+		Module.ClunitsStore[Module.ClunitsNumR] ++;}
+	| NOR { Module.Clunits[Module.ClunitsNumR][Module.ClunitsNumC] = "nor";
+		Module.ClunitsNumC ++; 
+		Module.ClunitsStore[Module.ClunitsNumR] ++;}
+	| XOR { Module.Clunits[Module.ClunitsNumR][Module.ClunitsNumC] = "xor";
+		Module.ClunitsNumC ++; 
+		Module.ClunitsStore[Module.ClunitsNumR] ++;}
+	;
+/*********************************************************/
 %%
 

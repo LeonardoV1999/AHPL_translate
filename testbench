@@ -1,0 +1,20 @@
+AHPLMODULE : modulo . 
+
+INPUTS: a<5>.
+		  
+OUTPUTS:b<5>.
+
+buses
+exbuses
+MEMORY: x.
+clunits
+
+BODY
+a = b .
+END
+
+
+mend
+
+
+comsec

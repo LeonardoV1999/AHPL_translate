@@ -1,5 +1,8 @@
 #include "module.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 #define char_long 50
 
 char *copyArray(ModuleFlag* MF ,char *array, Mcom* Module, int row, int col, char *idVal)
@@ -185,21 +188,52 @@ void externalUnits(Mcom exinput)
     for(int  i = 0; i< exinput.exinputsNumR; i++)
     {
      int a  =1;
- printf("\nexinputs_%s : entity work.%s\n",exinput.exinputs[i][0],exinput.exinputs[i][0]);
+     
+ printf("\nexinputs_%s : entity work.%s\n",exinput.exinputs[i][0][0],exinput.exinputs[i][0][0]);
       printf("port map (\n");
 	for(int j = 1; j <= exinput.exinputsStore[i]/2;j++)
 	{
-	 printf("\n%s => %s",(char*)exinput.exinputs[i][a],(char*)exinput.exinputs[i][a+1]);
+	 
+	 printf("\n%s => %s",(char*)exinput.exinputs[i][a][0],(char*)exinput.exinputs[i][a+1][0]);
+	 if(((char*)exinput.exinputs[i][a+1][1] !=(char*)'0')&&((char*)exinput.exinputs[i][a+1][2] ==(char*)'0'))
+	 {
+	  printf("(%s)",(char*)exinput.exinputs[i][a+1][1]);
+	 }
+	 else if(((char*)exinput.exinputs[i][a+1][1] !=(char*)'0')&&((char*)exinput.exinputs[i][a+1][2] !=(char*)'0'))
+	 {
+	  printf("(%s downto %s)",exinput.exinputs[i][a+1][1],exinput.exinputs[i][a+1][2]);
+	 }
 	 a = a+ 2;
 	 if(j < exinput.exinputsStore[i]/2)
 	 {
 	  printf(",\n");
 	 }
+	 
 	}      
       printf("\n);\n");
     }
   }
 }
+
+void CombLogicUnits(Mcom clunit)
+{
+  for(int i = 0; i < clunit.ClunitsNumR; i++)
+  {
+	  for (int j = 0; j < clunit.ClunitsStore[i] ; j++)
+	  {
+
+		   printf("%s ",(char*)clunit.Clunits[i][j]);
+		   if (j == 0)
+		   {
+		    printf(" <= ");
+		   }
+		   if (j == clunit.ClunitsStore[i] -1)
+		   { printf(";\n");}
+		  
+  	   }
+  }
+}
+
 void AHPL_translate(Mcom input, char *array[])
 {
 	printf("\n\nlibrary ieee;\n");
@@ -222,8 +256,12 @@ void AHPL_translate(Mcom input, char *array[])
 	printf("\nbegin\n");
 	/* maquinas de estado */
 	
+	/*unidades logicas combinacionales*/
+	CombLogicUnits(input);
+	
 	/* entradas externas */
 	externalUnits(input);
+	
 	printf("\nend architecture ARC%s;\n", input.moduleName);
 	/*fin de arquitectura*/
 	
@@ -233,11 +271,11 @@ void AHPL_translate(Mcom input, char *array[])
 	{
 	 for (int j = 0; j <= input.exinputsStore[input.exinputsNumR]; j++)
 	 {
-           printf("\n--%s\n", input.exinputs[i][j]);
+           printf("\n--%s\n", input.exinputs[i][j][0]);
            
          }	
 	}
         printf("\n%d\n", input.exinputsNumR);
-        printf("\n%s\n", input.exinputs[3][4]);
+        printf("\n%s\n", input.exinputs[3][4][0]);
 	return ;
 }

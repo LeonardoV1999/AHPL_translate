@@ -30,10 +30,14 @@
 /************************************************************************************************/
 <exaid>	   ::= <id> '[' {exaidw {;exaidw}} ']' //esta declaracion permite definir las unidades
 						//externas de manera mas simple y similar al VHDL
-<exaidw>   ::= '{'<aid1> , <aid1>'}'
+<exaidw>   ::= '{'<aid1> , <aid2>'}'
 /************************************************************************************************/
 
-<aid1>	   ::= id ['<'num'>']                            // solo se puede crear una fila
+<aid1>	   ::= id ['<'num'>']          // solo se puede crear una fila del tamaño que yo quiera
+
+<aid2>     ::= id ['<'num [: num] '>'] // puedo tomar segmentos de un arreglo siempre 
+				   //que este declarado					     
+	       
  
 
 
